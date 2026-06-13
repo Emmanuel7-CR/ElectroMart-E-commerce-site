@@ -1,0 +1,203 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design Tokens ── */
+:root {
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
+  --color-secondary: #0F172A;
+  --color-accent: #06B6D4;
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-background: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #64748B;
+  --color-text-muted: #94A3B8;
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+  --shadow-card-hover: 0 4px 12px 0 rgb(0 0 0 / 0.10), 0 2px 4px -1px rgb(0 0 0 / 0.06);
+  --shadow-modal: 0 20px 60px -10px rgb(0 0 0 / 0.25);
+  --shadow-dropdown: 0 8px 24px -4px rgb(0 0 0 / 0.12);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+}
+
+.dark {
+  --color-primary: #3B82F6;
+  --color-primary-hover: #60A5FA;
+  --color-secondary: #F1F5F9;
+  --color-accent: #22D3EE;
+  --color-success: #4ADE80;
+  --color-warning: #FBC034;
+  --color-danger: #F87171;
+  --color-background: #0F172A;
+  --color-surface: #1E293B;
+  --color-border: #334155;
+  --color-text-primary: #F1F5F9;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #64748B;
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+  --shadow-card-hover: 0 4px 12px 0 rgb(0 0 0 / 0.4);
+  --shadow-modal: 0 20px 60px -10px rgb(0 0 0 / 0.6);
+  --shadow-dropdown: 0 8px 24px -4px rgb(0 0 0 / 0.4);
+}
+
+/* ── Base Styles ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  line-height: 1.5;
+  transition: background-color var(--transition-base), color var(--transition-base);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
+
+/* ── Focus Styles ── */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Selection ── */
+::selection {
+  background: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  color: var(--color-text-primary);
+}
+
+/* ── Utility Classes ── */
+@layer components {
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 font-medium rounded-lg
+           transition-all duration-150 focus-visible:ring-2 focus-visible:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed select-none whitespace-nowrap;
+  }
+  .btn-sm  { @apply btn text-sm px-3 py-1.5 h-8; }
+  .btn-md  { @apply btn text-sm px-4 py-2 h-10; }
+  .btn-lg  { @apply btn text-base px-6 py-2.5 h-11; }
+
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary-hover
+           focus-visible:ring-primary shadow-sm;
+  }
+  .btn-secondary {
+    @apply bg-secondary text-white hover:bg-opacity-80
+           focus-visible:ring-secondary;
+  }
+  .btn-outline {
+    @apply border border-border bg-surface text-text-primary
+           hover:bg-background focus-visible:ring-primary;
+  }
+  .btn-ghost {
+    @apply text-text-secondary hover:bg-border hover:text-text-primary
+           focus-visible:ring-primary;
+  }
+  .btn-danger {
+    @apply bg-danger text-white hover:bg-red-600
+           focus-visible:ring-danger;
+  }
+
+  /* Inputs */
+  .input-base {
+    @apply w-full h-10 px-3 rounded-lg border border-border bg-surface
+           text-sm text-text-primary placeholder:text-text-muted
+           transition-all duration-150
+           focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-0 focus:border-primary
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .input-error {
+    @apply border-danger focus:ring-danger;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-surface border border-border rounded-xl p-6;
+    box-shadow: var(--shadow-card);
+  }
+  .card-hover {
+    @apply card transition-shadow duration-200 hover:shadow-card-hover cursor-pointer;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium;
+  }
+  .badge-success { @apply badge bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400; }
+  .badge-warning { @apply badge bg-yellow-50 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400; }
+  .badge-danger  { @apply badge bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400; }
+  .badge-info    { @apply badge bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400; }
+  .badge-neutral { @apply badge bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300; }
+
+  /* Skeleton loader */
+  .skeleton {
+    @apply rounded-lg bg-border animate-pulse;
+  }
+
+  /* Page container */
+  .container-base {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Section spacing */
+  .section { @apply py-12 md:py-16 lg:py-20; }
+
+  /* Divider */
+  .divider { @apply border-t border-border my-6; }
+
+  /* Form label */
+  .form-label {
+    @apply block text-sm font-medium text-text-primary mb-1.5;
+  }
+  .form-error {
+    @apply text-xs text-danger mt-1 flex items-center gap-1;
+  }
+  .form-hint {
+    @apply text-xs text-text-muted mt-1;
+  }
+}
+
+/* ── Page transitions ── */
+.page-enter {
+  animation: fadeIn 200ms ease-out;
+}
+
+/* ── Toast animations ── */
+.toast-enter {
+  animation: slideUp 250ms ease-out;
+}
+
+/* ── Dropdown animations ── */
+.dropdown-enter {
+  animation: slideDown 150ms ease-out;
+}
+
+/* ── Modal animations ── */
+.modal-enter {
+  animation: fadeIn 200ms ease-out;
+}
+.modal-content-enter {
+  animation: slideUp 250ms ease-out;
+}
