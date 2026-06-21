@@ -163,6 +163,18 @@ export function Header() {
     return () => window.removeEventListener('scroll', handler)
   }, [])
 
+  // Global Cmd/Ctrl+K shortcut opens search
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        openSearch()
+      }
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [openSearch])
+
   const handleSignOut = async () => {
     await signOut()
     navigate('/')
@@ -210,7 +222,16 @@ export function Header() {
           <div className="flex items-center gap-1">
             <button
               onClick={openSearch}
-              className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-border transition-colors"
+              className="hidden sm:flex items-center gap-2 pl-3 pr-2.5 h-9 rounded-lg border border-border text-text-muted hover:text-text-primary hover:border-primary/40 transition-colors text-xs"
+              aria-label="Search (Ctrl+K)"
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span className="hidden md:block">Search</span>
+              <kbd className="hidden lg:flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-background border border-border text-2xs font-mono">⌘K</kbd>
+            </button>
+            <button
+              onClick={openSearch}
+              className="sm:hidden p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-border transition-colors"
               aria-label="Search"
             >
               <Search className="w-5 h-5" />

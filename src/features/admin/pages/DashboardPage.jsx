@@ -1,105 +1,168 @@
-import {
-  ShoppingBag, Package, Users, TrendingUp,
-  ArrowUpRight, Clock, CheckCircle2, AlertTriangle
-} from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { ShoppingBag, Package, Users, TrendingUp, Clock, CheckCircle2, AlertTriangle, ArrowRight, BarChart2 } from 'lucide-react'
 import { SEO } from '@/components/shared/SEO'
+import { StatsCard } from '../components/StatsCard'
+import { RevenueChart } from '../components/RevenueChart'
+import { Badge } from '@/components/ui/Badge'
+import { adminService } from '@/services/adminService'
 import { formatCurrency } from '@/utils/currency'
-
-const stats = [
-  { label: 'Total Revenue', value: formatCurrency(0), icon: TrendingUp, change: '+0%', color: 'text-primary bg-blue-50 dark:bg-blue-900/20' },
-  { label: 'Total Orders', value: '0', icon: ShoppingBag, change: '+0', color: 'text-success bg-green-50 dark:bg-green-900/20' },
-  { label: 'Products', value: '0', icon: Package, change: '0 active', color: 'text-accent bg-cyan-50 dark:bg-cyan-900/20' },
-  { label: 'Customers', value: '0', icon: Users, change: '+0 this week', color: 'text-warning bg-yellow-50 dark:bg-yellow-900/20' },
-]
+import { formatDate } from '@/utils/date'
+import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS } from '@/utils/constants'
 
 export function DashboardPage() {
+  const [stats, setStats] = useState({ totalOrders: 0, totalRevenue: 0, totalCustomers: 0, totalProducts: 0 })
+  const [chartData, setChartData] = useState([])
+  const [recentOrders, setRecentOrders] = useState([])
+  const [statusCounts, setStatusCounts] = useState({})
+  const [lowStock, setLowStock] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [chartLoading, setChartLoading] = useState(true)
+
+  useEffect(() => {
+    Promise.all([
+      adminService.getDashboardStats(),
+      adminService.getRecentOrders(6),
+      adminService.getOrderStatusCounts(),
+      adminService.getLowStockVariants(),
+    ]).then(([s, orders, counts, ls]) => {
+      setStats(s)
+      setRecentOrders(orders)
+      setStatusCounts(counts)
+      setLowStock(ls.slice(0, 5))
+    }).catch(() => {}).finally(() => setLoading(false))
+
+    adminService.getRevenueChart(30)
+      .then(setChartData)
+      .catch(() => {})
+      .finally(() => setChartLoading(false))
+  }, [])
+
   return (
     <>
       <SEO title="Dashboard — Admin" noIndex />
       <div className="space-y-6">
-        {/* Page header */}
+        {/* Header */}
         <div>
           <h1 className="text-xl font-bold text-text-primary">Dashboard</h1>
-          <p className="text-sm text-text-secondary mt-0.5">
-            Welcome back. Here's what's happening with your store.
-          </p>
+          <p className="text-sm text-text-secondary mt-0.5">Welcome back. Here's your store at a glance.</p>
         </div>
 
-        {/* Stats grid */}
+        {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {stats.map(stat => (
-            <div key={stat.label} className="card">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm text-text-secondary mb-1">{stat.label}</p>
-                  <p className="text-2xl font-bold text-text-primary">{stat.value}</p>
-                  <p className="text-xs text-text-muted mt-1 flex items-center gap-1">
-                    <ArrowUpRight className="w-3 h-3" />
-                    {stat.change}
-                  </p>
-                </div>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${stat.color}`}>
-                  <stat.icon className="w-5 h-5" />
-                </div>
+          <StatsCard label="Total Revenue" value={loading ? '…' : formatCurrency(stats.totalRevenue)} icon={TrendingUp} color="blue" sub="All time paid orders" />
+          <StatsCard label="Total Orders" value={loading ? '…' : stats.totalOrders.toLocaleString()} icon={ShoppingBag} color="green" sub={`${statusCounts.pending || 0} pending`} />
+          <StatsCard label="Active Products" value={loading ? '…' : stats.totalProducts.toLocaleString()} icon={Package} color="amber" sub={`${lowStock.length} low stock`} />
+          <StatsCard label="Customers" value={loading ? '…' : stats.totalCustomers.toLocaleString()} icon={Users} color="cyan" sub="Registered accounts" />
+        </div>
+
+        {/* Revenue Chart */}
+        <div className="card">
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="font-semibold text-text-primary">Revenue — Last 30 days</h2>
+              <p className="text-xs text-text-muted mt-0.5">Paid orders only</p>
+            </div>
+            <Link to="/admin/analytics" className="text-xs text-primary hover:text-primary-hover font-medium flex items-center gap-1">
+              Full analytics <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <RevenueChart data={chartData} loading={chartLoading} />
+        </div>
+
+        {/* Two column grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recent orders */}
+          <div className="card">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-text-primary">Recent Orders</h2>
+              <Link to="/admin/orders" className="text-xs text-primary hover:text-primary-hover font-medium flex items-center gap-1">
+                View all <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+            {recentOrders.length === 0 ? (
+              <p className="text-sm text-text-muted py-8 text-center">No orders yet</p>
+            ) : (
+              <div className="space-y-0 divide-y divide-border">
+                {recentOrders.map(order => (
+                  <Link key={order.id} to={`/admin/orders/${order.id}`}
+                    className="flex items-center justify-between py-3 hover:bg-background -mx-2 px-2 rounded-lg transition-colors group">
+                    <div>
+                      <p className="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">
+                        {order.order_number}
+                      </p>
+                      <p className="text-xs text-text-muted">
+                        {order.profiles?.full_name || order.profiles?.email || 'Guest'} · {formatDate(order.created_at)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={ORDER_STATUS_COLORS[order.status] || 'neutral'} dot>
+                        {ORDER_STATUS_LABELS[order.status] || order.status}
+                      </Badge>
+                      <span className="text-sm font-semibold text-text-primary">{formatCurrency(order.total)}</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Right column */}
+          <div className="space-y-6">
+            {/* Order status breakdown */}
+            <div className="card">
+              <h2 className="font-semibold text-text-primary mb-4 flex items-center gap-2">
+                <BarChart2 className="w-4 h-4 text-primary" />
+                Order Status
+              </h2>
+              <div className="space-y-2">
+                {[
+                  { key: 'pending',    label: 'Pending',    icon: Clock,         color: 'text-warning' },
+                  { key: 'processing', label: 'Processing', icon: Package,       color: 'text-primary' },
+                  { key: 'shipped',    label: 'Shipped',    icon: ShoppingBag,   color: 'text-accent' },
+                  { key: 'delivered',  label: 'Delivered',  icon: CheckCircle2,  color: 'text-success' },
+                  { key: 'cancelled',  label: 'Cancelled',  icon: AlertTriangle, color: 'text-danger' },
+                ].map(({ key, label, icon: Icon, color }) => (
+                  <div key={key} className="flex items-center justify-between py-1.5">
+                    <div className="flex items-center gap-2">
+                      <Icon className={`w-4 h-4 ${color}`} />
+                      <span className="text-sm text-text-secondary">{label}</span>
+                    </div>
+                    <span className="text-sm font-semibold text-text-primary">
+                      {statusCounts[key] || 0}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
 
-        {/* Status grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent orders placeholder */}
-          <div className="card">
-            <h2 className="text-sm font-semibold text-text-primary mb-4 flex items-center gap-2">
-              <ShoppingBag className="w-4 h-4 text-primary" />
-              Recent Orders
-            </h2>
-            <div className="space-y-3">
-              {[
-                { label: 'Pending', icon: Clock, color: 'text-warning', count: 0 },
-                { label: 'Processing', icon: Package, color: 'text-primary', count: 0 },
-                { label: 'Delivered', icon: CheckCircle2, color: 'text-success', count: 0 },
-                { label: 'Needs attention', icon: AlertTriangle, color: 'text-danger', count: 0 },
-              ].map(item => (
-                <div key={item.label} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                  <div className="flex items-center gap-2">
-                    <item.icon className={`w-4 h-4 ${item.color}`} />
-                    <span className="text-sm text-text-secondary">{item.label}</span>
-                  </div>
-                  <span className="text-sm font-medium text-text-primary">{item.count}</span>
+            {/* Low stock alert */}
+            {lowStock.length > 0 && (
+              <div className="card border-warning/30 bg-yellow-50/50 dark:bg-yellow-900/10">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="font-semibold text-text-primary flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-warning" />
+                    Low Stock Alert
+                  </h2>
+                  <Link to="/admin/inventory" className="text-xs text-primary font-medium">View all</Link>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Quick actions */}
-          <div className="card">
-            <h2 className="text-sm font-semibold text-text-primary mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: 'Add Product', href: '/admin/products/new', icon: Package },
-                { label: 'View Orders', href: '/admin/orders', icon: ShoppingBag },
-                { label: 'Manage Inventory', href: '/admin/inventory', icon: AlertTriangle },
-                { label: 'View Analytics', href: '/admin/analytics', icon: TrendingUp },
-              ].map(action => (
-                <a
-                  key={action.label}
-                  href={action.href}
-                  className="flex items-center gap-2 p-3 rounded-lg border border-border hover:border-primary/30 hover:bg-primary/5 transition-colors group"
-                >
-                  <action.icon className="w-4 h-4 text-text-muted group-hover:text-primary transition-colors" />
-                  <span className="text-sm font-medium text-text-secondary group-hover:text-primary transition-colors">
-                    {action.label}
-                  </span>
-                </a>
-              ))}
-            </div>
+                <div className="space-y-2">
+                  {lowStock.map(v => (
+                    <div key={v.id} className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-text-primary">{v.product_name}</p>
+                        <p className="text-xs text-text-muted">{v.variant_name}</p>
+                      </div>
+                      <span className={`text-sm font-bold ${v.stock_qty === 0 ? 'text-danger' : 'text-warning'}`}>
+                        {v.stock_qty} left
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
-
-        <p className="text-xs text-text-muted text-center pt-4 border-t border-border">
-          Full analytics with charts will be available in Phase 6 (Admin Dashboard) and Phase 9 (Analytics).
-        </p>
       </div>
     </>
   )

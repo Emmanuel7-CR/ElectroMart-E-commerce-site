@@ -79,7 +79,7 @@ export const couponSchema = z.object({
   code: z.string().min(3, 'Coupon code must be at least 3 characters').max(50).toUpperCase(),
   description: z.string().optional(),
   type: z.enum(['percentage', 'fixed', 'free_shipping']),
-  value: z.number().min(0.01, 'Value must be greater than 0'),
+  value: z.number().min(0, 'Value must be 0 or greater'),
   min_order_amount: z.number().min(0).default(0),
   max_uses: z.number().int().min(1).optional().nullable(),
   is_active: z.boolean().default(true),

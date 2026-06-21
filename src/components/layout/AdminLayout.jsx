@@ -9,6 +9,7 @@ import { cn } from '@/utils/helpers'
 import { useAuthStore } from '@/store/authStore'
 import { useThemeStore } from '@/store/themeStore'
 import { APP_NAME } from '@/utils/constants'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 
 const navItems = [
   { label: 'Dashboard', href: '/admin', icon: LayoutDashboard, exact: true },
@@ -98,6 +99,7 @@ export function AdminLayout() {
   )
 
   return (
+    <>
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Desktop sidebar */}
       <div className={cn(
@@ -169,6 +171,8 @@ export function AdminLayout() {
         </main>
       </div>
     </div>
+    <ConfirmDialog />
+    </>
   )
 }
 
